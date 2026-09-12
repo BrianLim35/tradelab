@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Stock } from "../models/Stock";
-import type { Trade } from "../models/Trade.ts";
+import type { Trade } from "../models/Trade";
 
 interface TradeFormProps {
     stock: Stock;

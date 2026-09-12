@@ -1,10 +1,12 @@
 import { useState } from "react";
 import type { Stock } from "./models/Stock";
 import type { Trade } from "./models/Trade";
+import type { Position } from "./models/Position";
 
-import StockCard from "./components/StockCard.tsx";
-import TradeForm from "./components/TradeForm.tsx";
-import TradeHistory from "./components/TradeHistory.tsx";
+import StockCard from "./components/StockCard";
+import TradeForm from "./components/TradeForm";
+import TradeHistory from "./components/TradeHistory";
+import PositionList from "./components/PositionList";
 
 const stocks: Stock[] = [
     {
@@ -33,9 +35,41 @@ function App() {
     const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
     const [trades, setTrades] = useState<Trade[]>([]);
     const [cash, setCash] = useState<number>(100000);
+    const [positions, setPositions] = useState<Position[]>([]);
+    const [tradeError, setTradeError] = useState<string | null>(null);
+
+    function isTradeInvalid(trade: Trade): string | null {
+        if (trade.quantity < 1) {
+            return "Please enter a quantity greater than 0";
+        }
+
+        if (trade.side === "BUY") {
+            if (cash < trade.quantity * trade.price) {
+                return "Insufficient cash to buy!";
+            }
+            return null;
+        } else {
+            const position = positions.find(
+                (position) => position.symbol === trade.symbol
+            );
+            if (position === undefined || position.quantity < trade.quantity) {
+                return "Insufficient positions to sell!";
+            }
+            return null;
+        }
+    }
 
     function handleTrade(trade: Trade) {
         const tradeValue = trade.quantity * trade.price;
+        const quantityChange =
+            trade.side === "BUY" ? trade.quantity : - trade.quantity;
+
+        const error = isTradeInvalid(trade);
+        if (error) {
+            setTradeError(error);
+            return;
+        }
+        setTradeError(null);
 
         if (trade.side === "BUY") {
             setCash((currentCash) => currentCash - tradeValue);
@@ -47,6 +81,30 @@ function App() {
             ...currentTrades,
             trade
         ]);
+
+        setPositions((currentPositions) => {
+            const existingPosition = currentPositions.find(
+                (position) => position.symbol === trade.symbol
+            );
+
+            if (existingPosition) {
+                return (currentPositions.map((position) =>
+                position.symbol === trade.symbol
+                    ? {
+                        ...position,
+                        quantity: position.quantity + quantityChange
+                    }
+                    : position));
+            }
+
+            return [
+                ...currentPositions,
+                {
+                    symbol: trade.symbol,
+                    quantity: quantityChange
+                }
+            ];
+        });
     }
 
     return (
@@ -55,6 +113,13 @@ function App() {
 
             <h2>Portfolio</h2>
             <p>Cash: ${cash.toFixed(2)}</p>
+
+            <br/>
+
+            <h2>Positions</h2>
+            <PositionList
+                positions={positions}
+            />
 
             <br/>
 
@@ -87,6 +152,10 @@ function App() {
                     stock={selectedStock}
                     onTrade={handleTrade}
                 />
+            )}
+
+            {tradeError && (
+                <p>{tradeError}</p>
             )}
 
             <br/>
