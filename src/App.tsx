@@ -32,12 +32,21 @@ const stocks: Stock[] = [
 function App() {
     const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
     const [trades, setTrades] = useState<Trade[]>([]);
+    const [cash, setCash] = useState<number>(100000);
 
     function handleTrade(trade: Trade) {
+        const tradeValue = trade.quantity * trade.price;
+
+        if (trade.side === "BUY") {
+            setCash((currentCash) => currentCash - tradeValue);
+        } else {
+            setCash((currentCash) => currentCash + tradeValue);
+        }
+
         setTrades((currentTrades) => [
             ...currentTrades,
             trade
-        ])
+        ]);
     }
 
     return (
@@ -45,7 +54,7 @@ function App() {
             <h1>TradeLab</h1>
 
             <h2>Portfolio</h2>
-            <p>$100,000</p>
+            <p>Cash: ${cash.toFixed(2)}</p>
 
             <br/>
 
