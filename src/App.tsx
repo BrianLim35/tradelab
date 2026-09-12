@@ -1,4 +1,6 @@
 import type { Stock } from "./models/Stock";
+import StockCard from "./components/StockCard.tsx";
+import { useState } from "react";
 
 const stocks: Stock[] = [
     {
@@ -24,6 +26,8 @@ const stocks: Stock[] = [
 ]
 
 function App() {
+    const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+
     return (
         <div>
             <h1>TradeLab</h1>
@@ -33,10 +37,25 @@ function App() {
 
             <h2>Watchlist</h2>
             {stocks.map((stock) => (
-                <p key={stock.symbol}>
-                    {stock.symbol} - {stock.price}
-                </p>
+                <StockCard
+                    key={stock.symbol}
+                    stock={stock}
+                    onSelect={setSelectedStock}
+                />
             ))}
+
+            <br/>
+
+            <h2>Selected Stock</h2>
+            {selectedStock ? (
+                <div>
+                    <h3>{selectedStock.symbol}</h3>
+                    <p>{selectedStock.name}</p>
+                    <p>{selectedStock.price}</p>
+                </div>
+            ) : (
+                <p>No stock selected</p>
+            )}
         </div>
     );
 }
