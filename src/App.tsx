@@ -1,6 +1,10 @@
-import type { Stock } from "./models/Stock";
-import StockCard from "./components/StockCard.tsx";
 import { useState } from "react";
+import type { Stock } from "./models/Stock";
+import type { Trade } from "./models/Trade";
+
+import StockCard from "./components/StockCard.tsx";
+import TradeForm from "./components/TradeForm.tsx";
+import TradeHistory from "./components/TradeHistory.tsx";
 
 const stocks: Stock[] = [
     {
@@ -27,6 +31,14 @@ const stocks: Stock[] = [
 
 function App() {
     const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+    const [trades, setTrades] = useState<Trade[]>([]);
+
+    function handleTrade(trade: Trade) {
+        setTrades((currentTrades) => [
+            ...currentTrades,
+            trade
+        ])
+    }
 
     return (
         <div>
@@ -34,6 +46,8 @@ function App() {
 
             <h2>Portfolio</h2>
             <p>$100,000</p>
+
+            <br/>
 
             <h2>Watchlist</h2>
             {stocks.map((stock) => (
@@ -56,6 +70,21 @@ function App() {
             ) : (
                 <p>No stock selected</p>
             )}
+
+            <br/>
+
+            {selectedStock && (
+                <TradeForm
+                    stock={selectedStock}
+                    onTrade={handleTrade}
+                />
+            )}
+
+            <br/>
+
+            <TradeHistory
+                trades={trades}
+            />
         </div>
     );
 }
