@@ -7,6 +7,7 @@ import StockCard from "./components/StockCard";
 import TradeForm from "./components/TradeForm";
 import TradeHistory from "./components/TradeHistory";
 import PositionList from "./components/PositionList";
+import ErrorMessage from "./components/ErrorMessage";
 
 const stocks: Stock[] = [
     {
@@ -60,16 +61,14 @@ function App() {
     }
 
     function handleTrade(trade: Trade) {
-        const tradeValue = trade.quantity * trade.price;
-        const quantityChange =
-            trade.side === "BUY" ? trade.quantity : - trade.quantity;
-
         const error = isTradeInvalid(trade);
         if (error) {
             setTradeError(error);
             return;
         }
         setTradeError(null);
+
+        const tradeValue = trade.quantity * trade.price;
 
         if (trade.side === "BUY") {
             setCash((currentCash) => currentCash - tradeValue);
@@ -82,17 +81,27 @@ function App() {
             trade
         ]);
 
+        const quantityChange =
+            trade.side === "BUY" ? trade.quantity : - trade.quantity;
+
         setPositions((currentPositions) => {
             const existingPosition = currentPositions.find(
                 (position) => position.symbol === trade.symbol
             );
 
             if (existingPosition) {
+                const newQuantity = existingPosition.quantity + quantityChange;
+
+                if (newQuantity === 0) {
+                    return currentPositions.filter(
+                        (position) => position.symbol !== trade.symbol);
+                }
+
                 return (currentPositions.map((position) =>
                 position.symbol === trade.symbol
                     ? {
                         ...position,
-                        quantity: position.quantity + quantityChange
+                        quantity: newQuantity
                     }
                     : position));
             }
@@ -107,11 +116,24 @@ function App() {
         });
     }
 
+    const positionsValue = positions.reduce((total, position) => {
+        const stock = stocks.find(
+            (stock) => stock.symbol === position.symbol);
+
+        if (!stock) {
+            return total;
+        }
+
+        return total + position.quantity * stock.price;
+    }, 0);
+    const portfolioValue = cash + positionsValue;
+
     return (
         <div>
             <h1>TradeLab</h1>
 
             <h2>Portfolio</h2>
+            <p>Portfolio: ${portfolioValue.toFixed(2)}</p>
             <p>Cash: ${cash.toFixed(2)}</p>
 
             <br/>
@@ -155,7 +177,7 @@ function App() {
             )}
 
             {tradeError && (
-                <p>{tradeError}</p>
+                <ErrorMessage message={tradeError} />
             )}
 
             <br/>
