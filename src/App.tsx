@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 
+import { validateTrade } from "./services/tradeService";
 import { updateCash, updatePosition } from "./store/portfolioSlice";
+import { addTrade } from "./store/tradesSlice";
 
 import type { Stock } from "./models/Stock";
 import type { Trade } from "./models/Trade";
@@ -41,7 +43,9 @@ function App() {
 
     const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
 
-    const [trades, setTrades] = useState<Trade[]>([]);
+    const trades = useAppSelector(
+        (state) => state.trades.trades
+    );
 
     const cash = useAppSelector(
         (state) => state.portfolio.cash
@@ -53,29 +57,8 @@ function App() {
 
     const [tradeError, setTradeError] = useState<string | null>(null);
 
-    function isTradeInvalid(trade: Trade): string | null {
-        if (trade.quantity < 1) {
-            return "Please enter a quantity greater than 0";
-        }
-
-        if (trade.side === "BUY") {
-            if (cash < trade.quantity * trade.price) {
-                return "Insufficient cash to buy!";
-            }
-            return null;
-        } else {
-            const position = positions.find(
-                (position) => position.symbol === trade.symbol
-            );
-            if (position === undefined || position.quantity < trade.quantity) {
-                return "Insufficient positions to sell!";
-            }
-            return null;
-        }
-    }
-
     function handleTrade(trade: Trade) {
-        const error = isTradeInvalid(trade);
+        const error = validateTrade(trade, cash, positions);
         if (error) {
             setTradeError(error);
             return;
@@ -90,10 +73,7 @@ function App() {
             dispatch(updateCash(tradeValue));
         }
 
-        setTrades((currentTrades) => [
-            ...currentTrades,
-            trade
-        ]);
+        dispatch(addTrade(trade));
 
         const quantityChange =
             trade.side === "BUY" ? trade.quantity : - trade.quantity;

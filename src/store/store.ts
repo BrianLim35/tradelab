@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import portfolioReducer from "./portfolioSlice";
+import tradesReducer from "./tradesSlice";
 
 export const store = configureStore({
     reducer: {
-        portfolio: portfolioReducer
+        portfolio: portfolioReducer,
+        trades: tradesReducer
     }
 });
 
