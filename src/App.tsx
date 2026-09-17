@@ -1,14 +1,17 @@
 import { useState } from "react";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
+
+import { updateCash, updatePosition } from "./store/portfolioSlice";
+
 import type { Stock } from "./models/Stock";
 import type { Trade } from "./models/Trade";
-import type { Position } from "./models/Position";
 
 import StockCard from "./components/StockCard";
 import TradeForm from "./components/TradeForm";
 import TradeHistory from "./components/TradeHistory";
 import PositionList from "./components/PositionList";
 import ErrorMessage from "./components/ErrorMessage";
-import Portfolio from "./components/Portfolio.tsx";
+import Portfolio from "./components/Portfolio";
 
 const stocks: Stock[] = [
     {
@@ -34,10 +37,20 @@ const stocks: Stock[] = [
 ]
 
 function App() {
+    const dispatch = useAppDispatch();
+
     const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+
     const [trades, setTrades] = useState<Trade[]>([]);
-    const [cash, setCash] = useState<number>(100000);
-    const [positions, setPositions] = useState<Position[]>([]);
+
+    const cash = useAppSelector(
+        (state) => state.portfolio.cash
+    );
+
+    const positions = useAppSelector(
+        (state) => state.portfolio.positions
+    );
+
     const [tradeError, setTradeError] = useState<string | null>(null);
 
     function isTradeInvalid(trade: Trade): string | null {
@@ -72,9 +85,9 @@ function App() {
         const tradeValue = trade.quantity * trade.price;
 
         if (trade.side === "BUY") {
-            setCash((currentCash) => currentCash - tradeValue);
+            dispatch(updateCash(-tradeValue));
         } else {
-            setCash((currentCash) => currentCash + tradeValue);
+            dispatch(updateCash(tradeValue));
         }
 
         setTrades((currentTrades) => [
@@ -85,36 +98,10 @@ function App() {
         const quantityChange =
             trade.side === "BUY" ? trade.quantity : - trade.quantity;
 
-        setPositions((currentPositions) => {
-            const existingPosition = currentPositions.find(
-                (position) => position.symbol === trade.symbol
-            );
-
-            if (existingPosition) {
-                const newQuantity = existingPosition.quantity + quantityChange;
-
-                if (newQuantity === 0) {
-                    return currentPositions.filter(
-                        (position) => position.symbol !== trade.symbol);
-                }
-
-                return (currentPositions.map((position) =>
-                position.symbol === trade.symbol
-                    ? {
-                        ...position,
-                        quantity: newQuantity
-                    }
-                    : position));
-            }
-
-            return [
-                ...currentPositions,
-                {
-                    symbol: trade.symbol,
-                    quantity: quantityChange
-                }
-            ];
-        });
+        dispatch(updatePosition({
+            symbol: trade.symbol,
+            quantityChange
+        }));
     }
 
     const positionsValue = positions.reduce((total, position) => {
