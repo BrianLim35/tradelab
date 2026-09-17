@@ -8,6 +8,7 @@ import TradeForm from "./components/TradeForm";
 import TradeHistory from "./components/TradeHistory";
 import PositionList from "./components/PositionList";
 import ErrorMessage from "./components/ErrorMessage";
+import Portfolio from "./components/Portfolio.tsx";
 
 const stocks: Stock[] = [
     {
@@ -132,9 +133,10 @@ function App() {
         <div>
             <h1>TradeLab</h1>
 
-            <h2>Portfolio</h2>
-            <p>Portfolio: ${portfolioValue.toFixed(2)}</p>
-            <p>Cash: ${cash.toFixed(2)}</p>
+            <Portfolio
+                portfolioValue={portfolioValue}
+                cash={cash}
+            />
 
             <br/>
 
